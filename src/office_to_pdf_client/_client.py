@@ -4,7 +4,7 @@ from typing import Optional
 
 from httpx import Client
 
-from src.office_to_pdf_client._convert.libre_office import LibreOfficeApi
+from office_to_pdf_client._convert.libre_office import LibreOfficeApi
 
 
 class OfficeToPdfClient:

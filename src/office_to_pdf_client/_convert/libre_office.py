@@ -6,8 +6,8 @@ from typing import Optional, Self
 from httpx import Client
 from httpx._types import RequestFiles
 
-from src.office_to_pdf_client._convert.responses import SingleFileResponse
-from src.office_to_pdf_client._utils import guess_mime_type
+from office_to_pdf_client._convert.responses import SingleFileResponse
+from office_to_pdf_client._utils import guess_mime_type
 
 
 logger = logging.getLogger(__name__)
