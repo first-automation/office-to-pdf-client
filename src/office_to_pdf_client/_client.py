@@ -1,10 +1,16 @@
 import logging
+from contextlib import ExitStack
+from pathlib import Path
 from types import TracebackType
 from typing import Optional
 
 from httpx import Client
+from httpx._types import RequestFiles
 
-from office_to_pdf_client._convert.libre_office import LibreOfficeApi
+from office_to_pdf_client._utils import guess_mime_type
+
+
+logger = logging.getLogger(__name__)
 
 
 class OfficeToPdfClient:
@@ -15,6 +21,7 @@ class OfficeToPdfClient:
         timeout: float = 30.0,
         log_level: int = logging.ERROR,
         http2: bool = True,
+        api_route: str = "/convert_to_pdf"
     ):
         """_summary_
         Initialize a new office-to-pdf instance.
@@ -24,16 +31,21 @@ class OfficeToPdfClient:
             timeout (float, optional): _description_. Defaults to 30.0.
             log_level (int, optional): _description_. Defaults to logging.ERROR.
             http2 (bool, optional): _description_. Defaults to True.
+            api_route (str, optional): _description_. Defaults to /convert_to_pdf.
         """
         # Configure the client
+        self._http2 = http2
+        self._route = api_route
+        self._stack = ExitStack()
         self._client = Client(base_url=host, timeout=timeout, http2=http2)
 
         # Set the log level
         logging.getLogger("httpx").setLevel(log_level)
         logging.getLogger("httpcore").setLevel(log_level)
 
-        # Add the resources
-        self.libre_office = LibreOfficeApi(self._client)
+    @property
+    def http2(self):
+        return self._http2
 
     def add_headers(self, header: dict[str, str]) -> None:
         """
@@ -43,6 +55,43 @@ class OfficeToPdfClient:
             header (Dict[str, str]): A dictionary of header names and values to add.
         """
         self._client.headers.update(header)
+
+    def _get_resource(self, filepath: Path) -> RequestFiles:
+        """
+        Deals with opening all provided files for multi-part uploads, including
+        pushing their new contexts onto the stack to ensure resources like file
+        handles are cleaned up
+        """
+        resource = {}
+        filename = filepath.name
+        # Helpful but not necessary to provide the mime type when possible
+        mime_type = guess_mime_type(filepath)
+        if mime_type is not None:
+            resource.update(
+                {"file": (filename, self._stack.enter_context(filepath.open("rb")), mime_type)},
+            )
+        else:  # pragma: no cover
+            resource.update({"file": (filename, self._stack.enter_context(filepath.open("rb")))})  # type: ignore [dict-item]
+        return resource
+
+    def convert_to_pdf(self, input_file_path: Path, output_file_path: Path) -> None:
+        """
+        convert a single file to PDF.
+
+        Args:
+            input_file_path (Path): The path to the file to be converted.
+            output_file_path (Path): The path to the file for output.
+
+        Returns:
+            None
+        """
+
+        response = self._client.post(
+            url=self._route,
+            files=self._get_resource(input_file_path),
+        )
+        response.raise_for_status()
+        output_file_path.write_bytes(response.content)
 
     def close(self) -> None:
         """

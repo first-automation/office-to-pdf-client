@@ -1,6 +1,5 @@
 from importlib.util import find_spec
 from pathlib import Path
-from typing import Final
 from typing import Optional
 from typing import Union
 
@@ -50,5 +49,3 @@ def guess_mime_type_magic(url: Union[str, Path]) -> Optional[str]:
 
 # Use the best option
 guess_mime_type = guess_mime_type_magic if find_spec("magic") is not None else guess_mime_type_stdlib
-
-FORCE_MULTIPART: Final = ForceMultipartDict()
