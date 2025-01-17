@@ -5,7 +5,7 @@ sys.path.append(current_dir + "/src")
 
 from pathlib import Path
 
-from office_to_pdf_client._client import OfficeToPdfClient
+from office_to_pdf_client import OfficeToPdfClient
 
 
 def client_example():
