@@ -1,27 +1,23 @@
-import os
-import sys
-current_dir = os.getcwd()
-sys.path.append(current_dir + "/src")
-
 from pathlib import Path
 
 from office_to_pdf_client import OfficeToPdfClient
 
 
-def client_example():
-    office_to_pdf_url = "http://127.0.0.1:8000"
-    office_file_path = "./examples/test.xlsx"
-    output_file_path = "./examples/test.pdf"
+def client_example(office_to_pdf_url: str, input_file_path: str | Path):
     headers = {}
-    if isinstance(office_file_path, str):
-        office_file_path = Path(office_file_path)
-    if isinstance(output_file_path, str):
-        output_file_path = Path(output_file_path)
+    if isinstance(input_file_path, str):
+        input_file_path = Path(input_file_path)
+    output_file_path = input_file_path.with_suffix(".pdf")
     client = OfficeToPdfClient(office_to_pdf_url)
     if headers:
         client.add_headers(headers)
-    client.convert_to_pdf(office_file_path, output_file_path)
+    client.convert_to_pdf(input_file_path, output_file_path)
 
 
 if __name__ == "__main__":
-    client_example()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--office_to_pdf_url", type=str, default="http://127.0.0.1:8000")
+    parser.add_argument("--input", type=str, default="./examples/test.xlsx")
+    args = parser.parse_args()
+    client_example(args.office_to_pdf_url, args.input)

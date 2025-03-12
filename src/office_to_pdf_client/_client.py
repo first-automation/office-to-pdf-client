@@ -74,7 +74,7 @@ class OfficeToPdfClient:
             resource.update({"file": (filename, self._stack.enter_context(filepath.open("rb")))})  # type: ignore [dict-item]
         return resource
 
-    def convert_to_pdf(self, input_file_path: Path, output_file_path: Path) -> None:
+    def convert_to_pdf(self, input_file_path: Path, output_file_path: Path, sheet_names: list[str] | None = None) -> None:
         """
         convert a single file to PDF.
 
@@ -89,6 +89,7 @@ class OfficeToPdfClient:
         response = self._client.post(
             url=self._route,
             files=self._get_resource(input_file_path),
+            data={"sheet_names": sheet_names} if sheet_names is not None else None,
         )
         response.raise_for_status()
         output_file_path.write_bytes(response.content)
