@@ -4,7 +4,7 @@ current_dir = os.getcwd()
 sys.path.append(current_dir + "/src")
 
 import logging
-from office_to_pdf_client import OfficeToPdfClient
+from office_to_pdf_client import OfficeToPdfClient, OfficeToPdfClientAsync
 from unittest.mock import Mock  # Import Mock for patching
 from pytest_mock import MockerFixture
 from pathlib import Path
@@ -99,6 +99,20 @@ def test_convert_to_pdf_success(mocker):
 
     # アサーション
     assert result is None
+
+
+def test_convert_to_pdf_success_async(mocker):
+    # モックの作成
+    convert_to_pdf_mock = mocker.patch("office_to_pdf_client.OfficeToPdfClientAsync.convert_to_pdf")
+    convert_to_pdf_mock.return_value = None
+
+    # 入力と出力のパスを設定
+    input_file_path = Path('input.txt')
+    output_file_path = Path('output.pdf')
+
+    # テスト対象の関数呼び出し
+    converter = OfficeToPdfClientAsync("http://127.0.0.1:8000")  # 実際のクラスに置き換える
+    result = converter.convert_to_pdf(input_file_path, output_file_path)
 
 
 def test_close():

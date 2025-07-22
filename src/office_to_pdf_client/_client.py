@@ -4,7 +4,7 @@ from pathlib import Path
 from types import TracebackType
 from typing import Optional
 
-from httpx import Client
+from httpx import AsyncClient, Client
 from httpx._types import RequestFiles
 
 from office_to_pdf_client._utils import guess_mime_type
@@ -117,3 +117,26 @@ class OfficeToPdfClient:
             exc_tb: A traceback object encoding the stack trace, if an exception occurred.
         """
         self.close()
+
+
+class OfficeToPdfClientAsync(OfficeToPdfClient):
+    def __init__(
+        self,
+        host: str,
+        *,
+        timeout: float = 30.0,
+        log_level: int = logging.ERROR,
+        http2: bool = True,
+        api_route: str = "/convert_to_pdf"
+    ):
+        super().__init__(host, timeout=timeout, log_level=log_level, http2=http2, api_route=api_route)
+        self._client = AsyncClient(base_url=host, timeout=timeout, http2=http2)
+
+    async def convert_to_pdf(self, input_file_path: Path, output_file_path: Path, sheet_names: list[str] | None = None) -> None:
+        response = await self._client.post(
+            url=self._route,
+            files=self._get_resource(input_file_path),
+            data={"sheet_names": sheet_names} if sheet_names is not None else None,
+        )
+        response.raise_for_status()
+        output_file_path.write_bytes(response.content)
