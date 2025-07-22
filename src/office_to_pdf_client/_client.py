@@ -140,3 +140,6 @@ class OfficeToPdfClientAsync(OfficeToPdfClient):
         )
         response.raise_for_status()
         output_file_path.write_bytes(response.content)
+
+    async def close(self) -> None:
+        await self._client.aclose()
