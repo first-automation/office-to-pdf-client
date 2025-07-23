@@ -74,22 +74,37 @@ class OfficeToPdfClient:
             resource.update({"file": (filename, self._stack.enter_context(filepath.open("rb")))})  # type: ignore [dict-item]
         return resource
 
-    def convert_to_pdf(self, input_file_path: Path, output_file_path: Path, sheet_names: list[str] | None = None) -> None:
+    def convert_to_pdf(
+        self,
+        input_file_path: Path,
+        output_file_path: Path,
+        sheet_names: list[str] | None = None,
+        single_page_sheets: bool = False,
+    ) -> None:
         """
         convert a single file to PDF.
 
         Args:
             input_file_path (Path): The path to the file to be converted.
             output_file_path (Path): The path to the file for output.
+            sheet_names (list[str] | None): The names of the sheets to be converted (optional).
+            single_page_sheets (bool): Whether to convert the sheets to single page sheets (optional).
 
         Returns:
             None
         """
 
+        data = None
+        if sheet_names is not None:
+            data = {"sheet_names": sheet_names}
+        if single_page_sheets:
+            data = data or {}
+            data["single_page_sheets"] = single_page_sheets
+
         response = self._client.post(
             url=self._route,
             files=self._get_resource(input_file_path),
-            data={"sheet_names": sheet_names} if sheet_names is not None else None,
+            data=data,
         )
         response.raise_for_status()
         output_file_path.write_bytes(response.content)
@@ -132,11 +147,23 @@ class OfficeToPdfClientAsync(OfficeToPdfClient):
         super().__init__(host, timeout=timeout, log_level=log_level, http2=http2, api_route=api_route)
         self._client = AsyncClient(base_url=host, timeout=timeout, http2=http2)
 
-    async def convert_to_pdf(self, input_file_path: Path, output_file_path: Path, sheet_names: list[str] | None = None) -> None:
+    async def convert_to_pdf(
+        self,
+        input_file_path: Path,
+        output_file_path: Path,
+        sheet_names: list[str] | None = None,
+        single_page_sheets: bool = False,
+    ) -> None:
+        data = None
+        if sheet_names is not None:
+            data = {"sheet_names": sheet_names}
+        if single_page_sheets:
+            data = data or {}
+            data["single_page_sheets"] = single_page_sheets
         response = await self._client.post(
             url=self._route,
             files=self._get_resource(input_file_path),
-            data={"sheet_names": sheet_names} if sheet_names is not None else None,
+            data=data,
         )
         response.raise_for_status()
         output_file_path.write_bytes(response.content)
