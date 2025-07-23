@@ -94,17 +94,11 @@ class OfficeToPdfClient:
             None
         """
 
-        data = None
-        if sheet_names is not None:
-            data = {"sheet_names": sheet_names}
-        if single_page_sheets:
-            data = data or {}
-            data["single_page_sheets"] = single_page_sheets
-
         response = self._client.post(
             url=self._route,
             files=self._get_resource(input_file_path),
-            data=data,
+            data={"sheet_names": sheet_names} if sheet_names is not None else None,
+            params={"single_page_sheets": single_page_sheets},
         )
         response.raise_for_status()
         output_file_path.write_bytes(response.content)
@@ -154,16 +148,11 @@ class OfficeToPdfClientAsync(OfficeToPdfClient):
         sheet_names: list[str] | None = None,
         single_page_sheets: bool = False,
     ) -> None:
-        data = None
-        if sheet_names is not None:
-            data = {"sheet_names": sheet_names}
-        if single_page_sheets:
-            data = data or {}
-            data["single_page_sheets"] = single_page_sheets
         response = await self._client.post(
             url=self._route,
             files=self._get_resource(input_file_path),
-            data=data,
+            data={"sheet_names": sheet_names} if sheet_names is not None else None,
+            params={"single_page_sheets": single_page_sheets},
         )
         response.raise_for_status()
         output_file_path.write_bytes(response.content)
